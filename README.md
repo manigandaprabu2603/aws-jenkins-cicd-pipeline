@@ -235,12 +235,13 @@ Go to:
 Manage Jenkins
 → Credentials
 → Global
-→ Add Credentials
+→ Add Credentials (AWS Credentials)
 ```
 
 Add:
 
 ```
+ID (my_aws_credential)
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
 ```
@@ -287,55 +288,7 @@ jenkins/Jenkinsfile
 
 ---
 
-# Step 8: Docker Build
-
-Docker image is built using:
-
-```
-docker/Dockerfile
-```
-
-Example command used by pipeline:
-
-```
-docker build -t jenkins-demo-app .
-```
-
----
-
-# Step 9: Push Image to ECR
-
-Pipeline performs:
-
-```
-aws ecr login
-docker tag image
-docker push image
-```
-
-Example image:
-
-```
-123456789012.dkr.ecr.us-east-1.amazonaws.com/jenkins-demo-app
-```
-
----
-
-# Step 10: Deploy to EC2
-
-Deployment happens using SSH.
-
-Commands executed:
-
-```
-docker pull <image>
-
-docker stop app || true
-
-docker rm app || true
-
-docker run -d -p 80:3000 --name app <image>
-```
+# step to setup shared library
 
 ---
 

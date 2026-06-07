@@ -9,6 +9,12 @@ class AwsHelper implements Serializable {
     }
 
     def loginToECR() {
+        withCredentials([
+            [
+                $class: 'AmazonWebServicesCredentialsBinding',
+                credentialsId: 'my_aws_credential'
+            ]
+        ])
 
         steps.sh """
         aws ecr get-login-password --region ${steps.env.AWS_REGION} \
