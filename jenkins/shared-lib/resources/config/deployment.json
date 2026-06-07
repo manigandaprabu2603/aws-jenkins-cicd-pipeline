@@ -1,0 +1,4 @@
+{
+  "ec2_host": "EC2_PUBLIC_IP",
+  "ecr_repo": "123456789012.dkr.ecr.us-east-1.amazonaws.com/jenkins-demo-app"
+}
