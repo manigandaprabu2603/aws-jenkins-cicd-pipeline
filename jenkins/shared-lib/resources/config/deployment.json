@@ -1,4 +1,6 @@
 {
+  "ec2_user": "ubuntu",
+  "ec2_host": "REPLACE_WITH_EC2_PUBLIC_IP",
   "container_name": "app",
   "container_port": 3000,
   "host_port": 80

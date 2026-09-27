@@ -1,0 +1,8 @@
+.git
+.gitignore
+jenkins
+README.md
+LICENSE
+**/node_modules
+**/.env
+**/npm-debug.log

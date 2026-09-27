@@ -3,32 +3,37 @@ package org.company.utils
 class AwsHelper implements Serializable {
 
     def steps
+    static final String CREDENTIALS_ID = 'my_aws_credential'
 
     AwsHelper(steps) {
         this.steps = steps
     }
 
-    def loginToECR() {
-        withCredentials([
+    private withAwsCredentials(Closure body) {
+        steps.withCredentials([
             [
                 $class: 'AmazonWebServicesCredentialsBinding',
-                credentialsId: 'my_aws_credential'
+                credentialsId: CREDENTIALS_ID
             ]
-        ])
+        ], body)
+    }
 
-        steps.sh """
-        aws ecr get-login-password --region ${steps.env.AWS_REGION} \
-        | docker login --username AWS --password-stdin \
-        ${getAccountId()}.dkr.ecr.${steps.env.AWS_REGION}.amazonaws.com
-        """
+    def loginToECR() {
+        withAwsCredentials {
+            steps.sh """
+            aws ecr get-login-password --region ${steps.env.AWS_REGION} \
+            | docker login --username AWS --password-stdin \
+            ${getAccountId()}.dkr.ecr.${steps.env.AWS_REGION}.amazonaws.com
+            """
+        }
     }
 
     def getAccountId() {
-
-        return steps.sh(
-            script: "aws sts get-caller-identity --query Account --output text",
-            returnStdout: true
-        ).trim()
-
+        return withAwsCredentials {
+            steps.sh(
+                script: "aws sts get-caller-identity --query Account --output text",
+                returnStdout: true
+            ).trim()
+        }
     }
 }

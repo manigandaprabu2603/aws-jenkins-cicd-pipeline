@@ -55,7 +55,12 @@ Jenkins Pipeline
 project-root
 │
 ├── app
-│   ├── server.js
+│   ├── src
+│   │   ├── config
+│   │   │   └── config.js
+│   │   ├── routes
+│   │   │   └── health.js
+│   │   └── server.js
 │   └── package.json
 │
 ├── docker
@@ -79,7 +84,9 @@ project-root
 │           └── config
 │               └── deployment.json
 │
+├── .dockerignore
 ├── .gitignore
+├── LICENSE
 └── README.md
 ```
 
@@ -163,9 +170,11 @@ usermod -aG docker ubuntu
 # Create keyrings directory
 mkdir -p /etc/apt/keyrings
 
-# Download NEW Jenkins key (2026)
+# Download Jenkins signing key
+# NOTE: verify the exact key filename against the official docs before use:
+# https://www.jenkins.io/doc/book/installing/linux/#debianubuntu
 wget -O /etc/apt/keyrings/jenkins-keyring.asc \
-  https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
 
 # Add Jenkins repo
 echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" \
@@ -246,6 +255,14 @@ AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
 ```
 
+Also add an **SSH Username with private key** credential used to connect to the EC2 app host during deployment:
+
+```
+ID (ec2-ssh-key)
+Username (ubuntu)
+Private Key (paste the .pem key contents)
+```
+
 ---
 
 # Step 6: Create AWS ECR Repository
@@ -288,7 +305,31 @@ jenkins/Jenkinsfile
 
 ---
 
-# step to setup shared library
+# Step 8: Set Up the Jenkins Shared Library
+
+Register this repo's `jenkins/shared-lib` folder as a **Global Pipeline Library** so the `@Library('local-shared-lib') _` line in the Jenkinsfile resolves.
+
+```
+Manage Jenkins
+→ System
+→ Global Pipeline Libraries
+→ Add
+```
+
+Configure:
+
+```
+Name: local-shared-lib
+Default version: main
+Retrieval method: Modern SCM
+Source Code Management: Git
+Project Repository: <this GitHub repo URL>
+Library Path: jenkins/shared-lib
+```
+
+Finally, update `jenkins/shared-lib/resources/config/deployment.json` with your real EC2 public IP (`ec2_host`) before running the pipeline — it ships with a placeholder value.
+
+**Important:** the deploy stage authenticates to ECR *on the target EC2 host* (not just on the Jenkins host), so that instance needs its own way to reach AWS. Attach an IAM instance role with `AmazonEC2ContainerRegistryReadOnly` to it — this is also what the "Use IAM roles instead of access keys" best practice below refers to. If the app is deployed to the same instance running Jenkins, attach the role there.
 
 ---
 
@@ -326,19 +367,21 @@ Example:
 Install dependencies:
 
 ```
+cd app
 npm install
 ```
 
 Start server:
 
 ```
-node app/server.js
+npm start
 ```
 
 Access:
 
 ```
 http://localhost:3000
+http://localhost:3000/health
 ```
 
 ---
